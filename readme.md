@@ -7,7 +7,7 @@ Create a quick rest api with
 [deno kv](https://deno.com/kv) for storage and [ajv](https://ajv.js.org/) for
 validation.
 
-## run locally
+### run locally
 
 Create an `.env` file like this
 
@@ -37,13 +37,13 @@ Why all these permissions?
 - `--allow-env` to read the `.env` file
 - `--unstable` because deno kv still is
 
-## create your first collection
+### create your first collection
 
 Make a POST request to `/collections` with `name` (`string`) and `schema` (the
 JSON schema) in the body and `Authentication: Bearer $SUPER_USER_KEY` in the
 headers.
 
-## manage access to the collection
+### manage access to the collection
 
 Make a POST request to `/collections/:name/access`, with the same authentication
 and a body like:
@@ -71,12 +71,12 @@ authentication header. You can have multiple keys with different access.
 see [the example requests](./example.http) for more endpoints to manage
 collections.
 
-## use the api
+### use the api
 
 Start the server and go to http://localhost:3333 (if you did not change the
 port) to see and try the available endpoints.
 
-# run on deno deploy
+## run on deno deploy
 
 Create a project in https://dash.deno.com/projects
 
