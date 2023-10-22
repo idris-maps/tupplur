@@ -1,0 +1,61 @@
+@host = http://localhost:3333
+
+### Create a collection
+POST {{host}}/collections
+Authorization: Bearer {{$dotenv SUPER_USER_KEY}}
+Content-Type: application/json
+
+{
+  "name": "users",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "firstName": { "type": "string" },
+      "lastName": { "type": "string" },
+      "email": { "type": "string", "format": "email" },
+      "addresses" : {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties" : {
+            "streetName": { "type": "string" },
+            "streetNumber": { "type": "string" },
+            "zipCode": { "type": "string" },
+            "city": { "type": "string" },
+            "country": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
+
+### Get all collections
+GET {{host}}/collections
+Authorization: Bearer {{$dotenv SUPER_USER_KEY}}
+
+### Get collection by name
+GET {{host}}/collections/users
+Authorization: Bearer {{$dotenv SUPER_USER_KEY}}
+
+### Delete collection and all associated documents
+DELETE  {{host}}/collections/users
+Authorization: Bearer {{$dotenv SUPER_USER_KEY}}
+
+### Set collection access
+POST {{host}}/collections/users/access
+Authorization: Bearer {{$dotenv SUPER_USER_KEY}}
+Content-Type: application/json
+
+{
+  "key": "public",
+  "get": true,
+  "post": true,
+  "patch": true,
+  "put": true,
+  "delete": true
+}
+
+### Delete access key
+DELETE {{host}}/collections/users/access/public
+Authorization: Bearer {{$dotenv SUPER_USER_KEY}}
