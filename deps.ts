@@ -1,5 +1,4 @@
 export { default as Ajv } from "https://esm.sh/ajv@6.12.6";
-export type {} from "https://esm.sh/ajv@6.12.6";
 export { load as loadEnv } from "https://deno.land/std@0.204.0/dotenv/mod.ts";
 export {
   router,

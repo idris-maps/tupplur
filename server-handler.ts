@@ -252,14 +252,10 @@ const getRoutes = async (dbPath?: string) => {
         );
         if (!isValid) return res.json({ message: data }, { status: 400 });
 
-        const prevItem = await db.getCollectionItem(
-          collection.name,
-          req.params.id,
-        );
         const item = await db.setCollectionItem(
           collection,
           req.params.id,
-          { ...prevItem, ...sanitizeBySchema(collection.schema, data) },
+          sanitizeBySchema(collection.schema, data),
           true,
         );
         if (!item) return res.status(404);
@@ -290,6 +286,7 @@ const getRoutes = async (dbPath?: string) => {
           db.getCollection,
         );
         if (!collection) return res.status(status);
+        
         return res.json(
           await db.listSubCollectionItems(
             collection,
@@ -322,7 +319,7 @@ const getRoutes = async (dbPath?: string) => {
             collection,
             req.params.id,
             req.params.key,
-            data,
+            sanitizeBySchema(schema, data),
           ),
         );
       },
@@ -369,7 +366,7 @@ const getRoutes = async (dbPath?: string) => {
           req.params.id,
           req.params.key,
           req.params.subId,
-          data,
+          sanitizeBySchema(schema, data),
           true,
         );
         if (!item) return res.status(404);
@@ -401,7 +398,7 @@ const getRoutes = async (dbPath?: string) => {
           req.params.id,
           req.params.key,
           req.params.subId,
-          data,
+          sanitizeBySchema(schema, data),
         );
         if (!item) return res.status(404);
         return res.json(item);

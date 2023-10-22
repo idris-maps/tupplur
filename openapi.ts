@@ -271,11 +271,12 @@ export const getOpenApiSpec = (
     schemes: [url.protocol.slice(0, -1)],
     securityDefinitions: {
       Bearer: {
-        type: 'apiKey',
-        name: 'Authorization',
-        in: 'header',
-        description: 'Enter the token with the "Bearer: " prefix, e.g. "Bearer abcde12345"'
-      }
+        type: "apiKey",
+        name: "Authorization",
+        in: "header",
+        description:
+          'Enter the token with the "Bearer: " prefix, e.g. "Bearer abcde12345"',
+      },
     },
     security: {
       Bearer: [],
