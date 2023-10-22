@@ -286,7 +286,7 @@ const getRoutes = async (dbPath?: string) => {
           db.getCollection,
         );
         if (!collection) return res.status(status);
-        
+
         return res.json(
           await db.listSubCollectionItems(
             collection,
