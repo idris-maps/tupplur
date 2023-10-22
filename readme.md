@@ -1,4 +1,4 @@
-![tupplur](./swagger/favicon-32x32.png)
+![tupplur](./icon.png)
 
 # tupplur
 
