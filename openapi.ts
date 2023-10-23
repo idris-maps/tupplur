@@ -1,5 +1,5 @@
 import type { CollectionMeta } from "./types.ts";
-import { getSubCollectionNames, getSubSchema } from "./utils.ts";
+import { getSchema, getSubCollectionNames, getSubSchema } from "./utils.ts";
 
 interface RouteData {
   tags: string[];
@@ -25,6 +25,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
     tags: [collection.name],
     consumes: ["application/json"],
   };
+
   const idParam = {
     in: "path",
     name: `${collection.name}_id`,
@@ -37,6 +38,13 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
     in: "body",
     name: "body",
     description: `${collection.name} document`,
+    schema: getSchema(collection, { withoutSubCollections: true }),
+  };
+
+  const bodyParamFull = {
+    in: "body",
+    name: "body",
+    description: `${collection.name} document`,
     schema: collection.schema,
   };
 
@@ -44,15 +52,10 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
     in: "body",
     name: "body",
     description: `${collection.name} document`,
-    schema: { ...collection.schema, required: [] },
-  };
-
-  const schemaWithId = {
-    ...collection.schema,
-    properties: {
-      ...(collection.schema?.properties || {}),
-      _id: { type: "string" },
-    },
+    schema: getSchema(collection, {
+      withoutSubCollections: true,
+      partial: true,
+    }),
   };
 
   const paths: Paths = {
@@ -64,7 +67,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [],
         responses: {
           200: {
-            schema: { type: "array", items: schemaWithId },
+            schema: { type: "array", items: getSchema(collection) },
             description: "array of " + collection.name,
           },
         },
@@ -73,10 +76,10 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         ...common,
         description: `create ${collection.name}`,
         operationId: `create_${collection.name}`,
-        parameters: [bodyParam],
+        parameters: [bodyParamFull],
         responses: {
           200: {
-            schema: schemaWithId,
+            schema: getSchema(collection, { withId: true }),
             description: "created " + collection.name,
           },
         },
@@ -90,7 +93,10 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam],
         responses: {
           200: {
-            schema: schemaWithId,
+            schema: getSchema(collection, {
+              withoutSubCollections: true,
+              withId: true,
+            }),
             description: `${collection.name} document`,
           },
         },
@@ -102,7 +108,10 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, bodyParamPartial],
         responses: {
           200: {
-            schema: schemaWithId,
+            schema: getSchema(collection, {
+              withoutSubCollections: true,
+              withId: true,
+            }),
             description: `updated ${collection.name} document`,
           },
         },
@@ -114,7 +123,10 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, bodyParam],
         responses: {
           200: {
-            schema: schemaWithId,
+            schema: getSchema(collection, {
+              withoutSubCollections: true,
+              withId: true,
+            }),
             description: `replaced ${collection.name} document`,
           },
         },

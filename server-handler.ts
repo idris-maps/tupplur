@@ -9,7 +9,7 @@ import { isAuthorized, isSuperUser } from "./auth.ts";
 import initDb from "./db.ts";
 import { CollectionMeta } from "./types.ts";
 import { getOpenApiSpec } from "./openapi.ts";
-import { getSubSchema } from "./utils.ts";
+import { getSchema, getSubSchema } from "./utils.ts";
 
 const getCollectionAndCheckAuth = async (
   req: Req,
@@ -72,23 +72,6 @@ const getRoutes = async (dbPath?: string) => {
             message: `collection name "${collection.name}" is already used`,
           }, { status: 400 });
         }
-
-        await db.setCollection(
-          collection.name,
-          collection.schema,
-          (collection.access || []).map(sanitizeCollectionAccess),
-        );
-        return res.json({ message: `created ${collection.name}` });
-      },
-    },
-    {
-      method: "PUT",
-      path: "/collections",
-      handler: async (req, res) => {
-        if (!isSuperUser(req.headers)) return res.status(401);
-
-        const [isValid, collection] = validateCollection(req.data);
-        if (!isValid) return res.json({ message: collection }, { status: 400 });
 
         await db.setCollection(
           collection.name,
@@ -206,7 +189,10 @@ const getRoutes = async (dbPath?: string) => {
         );
         if (!collection) return res.status(status);
 
-        const [isValid, data] = validateBySchema(collection.schema, req.data);
+        const [isValid, data] = validateBySchema(
+          getSchema(collection, { withoutSubCollections: true }),
+          req.data,
+        );
         if (!isValid) return res.json({ message: data }, { status: 400 });
 
         const item = await db.setCollectionItem(
@@ -221,21 +207,6 @@ const getRoutes = async (dbPath?: string) => {
       },
     },
     {
-      method: "GET",
-      path: "/api/:name/:id",
-      handler: async (req, res) => {
-        const [collection, status] = await getCollectionAndCheckAuth(
-          req,
-          db.getCollection,
-        );
-        if (!collection) return res.status(status);
-
-        return res.json(
-          await db.getCollectionItem(collection.name, req.params.id),
-        );
-      },
-    },
-    {
       method: "PATCH",
       path: "/api/:name/:id",
       handler: async (req, res) => {
@@ -246,7 +217,7 @@ const getRoutes = async (dbPath?: string) => {
         if (!collection) return res.status(status);
 
         const [isValid, data] = validateBySchema(
-          collection.schema,
+          getSchema(collection, { withoutSubCollections: true }),
           req.data,
           true,
         );
@@ -387,8 +358,9 @@ const getRoutes = async (dbPath?: string) => {
         if (!schema) return res.status(404);
 
         const [isValid, data] = validateBySchema(
-          { ...schema, required: [] },
+          schema,
           req.data,
+          true,
         );
         if (!isValid) {
           return res.json({ message: data }, { status: 400 });
