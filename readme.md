@@ -9,6 +9,20 @@ validation.
 
 ### run locally
 
+Install
+
+```
+deno install -n tupplur --allow-net --allow-read --allow-write --allow-env --unstable https://deno.land/x/tupplur/local.ts
+```
+
+Why all these permissions?
+
+- `--allow-net` to accept incoming requests
+- `--allow-read` to read the database
+- `--allow-write` to write to the database
+- `--allow-env` to read the `.env` file
+- `--unstable` because deno kv still is
+
 Create an `.env` file like this
 
 ```
@@ -26,16 +40,8 @@ PORT=3333
 Start the server
 
 ```
-deno run --allow-net --allow-read --allow-write --allow-env --unstable local.ts
+tupplur
 ```
-
-Why all these permissions?
-
-- `--allow-net` to accept incoming requests
-- `--allow-read` to read the database
-- `--allow-write` to write to the database
-- `--allow-env` to read the `.env` file
-- `--unstable` because deno kv still is
 
 ### create your first collection
 

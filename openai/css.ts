@@ -40,6 +40,15 @@ body {
   background-color: var(--color-bg);
 }
 
+header {
+  padding: 1em;
+  text-align: center
+}
+
+header svg {
+  max-width: 100px;
+}
+
 main {
   width: 90%;
   max-width: 1200px;

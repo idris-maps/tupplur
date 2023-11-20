@@ -220,21 +220,6 @@ const getRoutes = async (dbPath?: string) => {
       },
     },
     {
-      method: "GET",
-      path: "/api/:name/:id",
-      handler: async (req, res) => {
-        const [collection, status] = await getCollectionAndCheckAuth(
-          req,
-          db.getCollection,
-        );
-        if (!collection) return res.status(status);
-
-        return res.json(
-          await db.getCollectionItem(collection.name, req.params.id),
-        );
-      },
-    },
-    {
       method: "PATCH",
       path: "/api/:name/:id",
       handler: async (req, res) => {
@@ -255,7 +240,6 @@ const getRoutes = async (dbPath?: string) => {
           collection,
           req.params.id,
           sanitizeBySchema(collection.schema, data),
-          true,
         );
         if (!item) return res.status(404);
 
