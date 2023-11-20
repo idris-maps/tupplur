@@ -9,8 +9,8 @@ import { isAuthorized, isSuperUser } from "./auth.ts";
 import initDb from "./db.ts";
 import { CollectionMeta } from "./types.ts";
 import { getSubSchema } from "./utils.ts";
-import { swaggerPage } from "./openai/mod.ts";
-import { getOpenApiSpec } from "./openai/open-api-spec.ts";
+import { swaggerPage } from "./openapi/mod.ts";
+import { getOpenApiSpec } from "./openapi/open-api-spec.ts";
 
 const getCollectionAndCheckAuth = async (
   req: Req,
