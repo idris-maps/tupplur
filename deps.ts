@@ -11,4 +11,5 @@ export type {
   Req,
 } from "https://deno.land/x/anders@v1.0.5/server/mod.ts";
 export { readArgs } from "https://deno.land/x/anders@v1.0.5/args/mod.ts";
+export { default as html } from "https://deno.land/x/anders@v1.0.5/html/html.ts";
 export { ulid } from "https://deno.land/x/ulid@v0.3.0/mod.ts";

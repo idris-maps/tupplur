@@ -1,32 +1,19 @@
-import type { CollectionMeta } from "./types.ts";
-import { getSchema, getSubCollectionNames, getSubSchema } from "./utils.ts";
+import type {
+  CollectionMeta,
+  Swagger,
+  SwaggerParameter,
+  SwaggerPath,
+} from "../types.ts";
+import { getSubCollectionNames, getSubSchema } from "../utils.ts";
 
-interface RouteData {
-  tags: string[];
-  summary?: string;
-  description?: string;
-  operationId: string;
-  consumes: string[];
-  parameters: ({
-    in: string;
-    name: string;
-    description?: string;
-    required?: boolean;
-  } & Record<string, unknown>)[];
-  responses: Record<number, { description?: string; schema?: unknown }>;
-}
-
-type RouteMethods = Record<string, RouteData>;
-
-type Paths = Record<string, RouteMethods>;
+type Paths = Record<string, Record<string, SwaggerPath>>;
 
 const createPathsFromCollection = (collection: CollectionMeta): Paths => {
   const common = {
     tags: [collection.name],
     consumes: ["application/json"],
   };
-
-  const idParam = {
+  const idParam: SwaggerParameter = {
     in: "path",
     name: `${collection.name}_id`,
     description: `${collection.name} id`,
@@ -34,17 +21,11 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
     required: true,
   };
 
-  const bodyParam = {
+  const bodyParam: SwaggerParameter = {
     in: "body",
     name: "body",
     description: `${collection.name} document`,
-    schema: getSchema(collection, { withoutSubCollections: true }),
-  };
-
-  const bodyParamFull = {
-    in: "body",
-    name: "body",
-    description: `${collection.name} document`,
+    // @ts-ignore ?
     schema: collection.schema,
   };
 
@@ -52,12 +33,17 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
     in: "body",
     name: "body",
     description: `${collection.name} document`,
-    schema: getSchema(collection, {
-      withoutSubCollections: true,
-      partial: true,
-    }),
+    schema: { ...collection.schema, required: [] },
   };
 
+  const schemaWithId = {
+    ...collection.schema,
+    properties: {
+      ...(collection.schema?.properties || {}),
+      _id: { type: "string" },
+    },
+  };
+  // @ts-ignore ?
   const paths: Paths = {
     [`/api/${collection.name}`]: {
       get: {
@@ -67,7 +53,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [],
         responses: {
           200: {
-            schema: { type: "array", items: getSchema(collection) },
+            schema: { type: "array", items: schemaWithId },
             description: "array of " + collection.name,
           },
         },
@@ -76,10 +62,10 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         ...common,
         description: `create ${collection.name}`,
         operationId: `create_${collection.name}`,
-        parameters: [bodyParamFull],
+        parameters: [bodyParam],
         responses: {
           200: {
-            schema: getSchema(collection, { withId: true }),
+            schema: schemaWithId,
             description: "created " + collection.name,
           },
         },
@@ -93,10 +79,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam],
         responses: {
           200: {
-            schema: getSchema(collection, {
-              withoutSubCollections: true,
-              withId: true,
-            }),
+            schema: schemaWithId,
             description: `${collection.name} document`,
           },
         },
@@ -108,10 +91,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, bodyParamPartial],
         responses: {
           200: {
-            schema: getSchema(collection, {
-              withoutSubCollections: true,
-              withId: true,
-            }),
+            schema: schemaWithId,
             description: `updated ${collection.name} document`,
           },
         },
@@ -123,10 +103,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, bodyParam],
         responses: {
           200: {
-            schema: getSchema(collection, {
-              withoutSubCollections: true,
-              withId: true,
-            }),
+            schema: schemaWithId,
             description: `replaced ${collection.name} document`,
           },
         },
@@ -156,17 +133,19 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
       },
     };
 
-    const subBodyParam = {
+    const subBodyParam: SwaggerParameter = {
       in: "body",
       name: "body",
       description: `${collection.name}.${key} document`,
-      schema: schema,
+      // @ts-ignore ?
+      schema,
     };
 
-    const subBodyParamPartial = {
+    const subBodyParamPartial: SwaggerParameter = {
       in: "body",
       name: "body",
       description: `${collection.name}.${key} document`,
+      // @ts-ignore ?
       schema: { ...schema, required: [] },
     };
 
@@ -190,6 +169,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, subBodyParam],
         responses: {
           200: {
+            // @ts-ignore ?
             schema: subSchemaWithId,
             description: "created " + collection.name,
           },
@@ -197,7 +177,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
       },
     };
 
-    const subIdParam = {
+    const subIdParam: SwaggerParameter = {
       in: "path",
       name: `${key}_id`,
       description: `${key} id`,
@@ -215,6 +195,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, subIdParam],
         responses: {
           200: {
+            // @ts-ignore ?
             schema: subSchemaWithId,
             description: `${collection.name} document`,
           },
@@ -227,6 +208,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, subIdParam, subBodyParamPartial],
         responses: {
           200: {
+            // @ts-ignore ?
             schema: subSchemaWithId,
             description: `updated ${collection.name}.${key} document`,
           },
@@ -239,6 +221,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         parameters: [idParam, subIdParam, subBodyParam],
         responses: {
           200: {
+            // @ts-ignore ?
             schema: subSchemaWithId,
             description: `replaced ${collection.name}.${key} document`,
           },
@@ -250,6 +233,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
         operationId: `delete_${collection.name}_${key}`,
         parameters: [idParam, subIdParam],
         responses: {
+          // @ts-ignore ?
           204: { description: `deleted ${collection.name}.${key}` },
         },
       },
@@ -261,7 +245,7 @@ const createPathsFromCollection = (collection: CollectionMeta): Paths => {
 export const getOpenApiSpec = (
   url: URL,
   collections: CollectionMeta[],
-) => {
+): Swagger => {
   const tags: { name: string; description: string }[] = [];
   const paths: Paths = {};
 
@@ -276,7 +260,7 @@ export const getOpenApiSpec = (
     });
   }
 
-  const spec = {
+  const spec: Swagger = {
     swagger: "2.0",
     info: { title: `Tupplur ${url.hostname}`, version: "1.0" },
     host: url.host,

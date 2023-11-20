@@ -101,9 +101,8 @@ const insertCollectionItem =
         }
         result[key] = values;
       }
-
-      return result;
     }
+    return result;
   };
 
 const addCollectionItem = (kv: Deno.Kv) =>

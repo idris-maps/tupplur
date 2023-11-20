@@ -8,8 +8,9 @@ import { sanitizeBySchema, sanitizeCollectionAccess } from "./sanitize.ts";
 import { isAuthorized, isSuperUser } from "./auth.ts";
 import initDb from "./db.ts";
 import { CollectionMeta } from "./types.ts";
-import { getOpenApiSpec } from "./openapi.ts";
-import { getSchema, getSubSchema } from "./utils.ts";
+import { getSubSchema } from "./utils.ts";
+import { swaggerPage } from "./openai/mod.ts";
+import { getOpenApiSpec } from "./openai/open-api-spec.ts";
 
 const getCollectionAndCheckAuth = async (
   req: Req,
@@ -31,12 +32,10 @@ const getRoutes = async (dbPath?: string) => {
     {
       method: "GET",
       path: "/",
-      handler: (_, res) => res.file("./swagger/index.html"),
-    },
-    {
-      method: "GET",
-      path: "/assets/:file",
-      handler: (req, res) => res.file(`./swagger/${req.params.file}`),
+      handler: async (req, res) => {
+        const collections = await db.listCollections();
+        return res.html(swaggerPage(getOpenApiSpec(req.url, collections)));
+      },
     },
     {
       method: "GET",
@@ -72,6 +71,23 @@ const getRoutes = async (dbPath?: string) => {
             message: `collection name "${collection.name}" is already used`,
           }, { status: 400 });
         }
+
+        await db.setCollection(
+          collection.name,
+          collection.schema,
+          (collection.access || []).map(sanitizeCollectionAccess),
+        );
+        return res.json({ message: `created ${collection.name}` });
+      },
+    },
+    {
+      method: "PUT",
+      path: "/collections",
+      handler: async (req, res) => {
+        if (!isSuperUser(req.headers)) return res.status(401);
+
+        const [isValid, collection] = validateCollection(req.data);
+        if (!isValid) return res.json({ message: collection }, { status: 400 });
 
         await db.setCollection(
           collection.name,
@@ -189,10 +205,7 @@ const getRoutes = async (dbPath?: string) => {
         );
         if (!collection) return res.status(status);
 
-        const [isValid, data] = validateBySchema(
-          getSchema(collection, { withoutSubCollections: true }),
-          req.data,
-        );
+        const [isValid, data] = validateBySchema(collection.schema, req.data);
         if (!isValid) return res.json({ message: data }, { status: 400 });
 
         const item = await db.setCollectionItem(
@@ -207,6 +220,21 @@ const getRoutes = async (dbPath?: string) => {
       },
     },
     {
+      method: "GET",
+      path: "/api/:name/:id",
+      handler: async (req, res) => {
+        const [collection, status] = await getCollectionAndCheckAuth(
+          req,
+          db.getCollection,
+        );
+        if (!collection) return res.status(status);
+
+        return res.json(
+          await db.getCollectionItem(collection.name, req.params.id),
+        );
+      },
+    },
+    {
       method: "PATCH",
       path: "/api/:name/:id",
       handler: async (req, res) => {
@@ -217,7 +245,7 @@ const getRoutes = async (dbPath?: string) => {
         if (!collection) return res.status(status);
 
         const [isValid, data] = validateBySchema(
-          getSchema(collection, { withoutSubCollections: true }),
+          collection.schema,
           req.data,
           true,
         );
@@ -358,9 +386,8 @@ const getRoutes = async (dbPath?: string) => {
         if (!schema) return res.status(404);
 
         const [isValid, data] = validateBySchema(
-          schema,
+          { ...schema, required: [] },
           req.data,
-          true,
         );
         if (!isValid) {
           return res.json({ message: data }, { status: 400 });
